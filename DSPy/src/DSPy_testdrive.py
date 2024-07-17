@@ -1,7 +1,7 @@
 import dspy
 # %%
 import pandas as pd
-# from dspy.datasets import Dataset
+
 import dspy
 import openai
 openai.api_key = 'your API Key'
@@ -102,21 +102,7 @@ class RAG(dspy.Module):
         prediction = self.generate_answer(context=context, question=question)
         return dspy.Prediction(context=context, answer=prediction.answer)
 # %%
-# from dspy.teleprompt import BootstrapFewShot
 
-# # Validation logic: check that the predicted answer is correct.
-# # Also check that the retrieved context does actually contain that answer.
-# def validate_context_and_answer(example, pred, trace=None):
-#     answer_EM = dspy.evaluate.answer_exact_match(example, pred)
-#     answer_PM = dspy.evaluate.answer_passage_match(example, pred)
-#     return answer_EM and answer_PM
-
-# # Set up a basic teleprompter, which will compile our RAG program.
-# teleprompter = BootstrapFewShot(metric=validate_context_and_answer)
-
-# # Compile!
-# compiled_rag = teleprompter.compile(RAG(), trainset=trainset)
-# %%
 class CoT(dspy.Module):
     def __init__(self):
         super().__init__()
