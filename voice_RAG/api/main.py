@@ -1,5 +1,5 @@
 # %%
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Form, UploadFile, File
 from typing import Optional
 from pydantic import BaseModel, Field
 from pydantic import ValidationError
@@ -13,11 +13,8 @@ from getpass import getpass
 from dotenv import load_dotenv, find_dotenv
 import boto3
 from io import BytesIO
-
-
 _ = load_dotenv('.env')
 openai.api_key = os.environ['OPENAI_API_KEY']
-
 app = FastAPI()
 # %%
 # Set up CORS middleware options
@@ -29,56 +26,49 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 # %%
-
-
 # %%
 class QueryInput(BaseModel): #.wav url
     input_wav_url: str
-
 class QueryResponse(BaseModel):
     output_wav_url: Optional[str]
     return_text: str
+#
+@app.post("/api/voicebot/", response_model=QueryResponse)
+async def voicebot_endpoint(
+     audio: UploadFile = File(None),
+    text: str = Form(None)
+):
+    
+    if audio:
+        print(f'Audio file received: {audio.filename}')
 
-# 
-@app.post("/voicebot/", response_model=QueryResponse,)
-async def voicebot_endpoint(input_data: QueryInput):
+        # Read the content of the uploaded file
+        content = await audio.read()
 
-    # TODO: first section, retrieve the .wav file from the input_data.input_wav_url
-    bucket_name = 'voice-rag'
-    object_key = 'output_microphone_audio1.wav'
-    local_filename = 'downloaded_audio.wav'
-
-    # Initialize an S3 client
-    s3 = boto3.client('s3')
-
-    # the file Download from S3
-    try:
-        s3.download_file(bucket_name, object_key, local_filename)
-        print(f"File downloaded successfully from {bucket_name}/{object_key}")
-    except Exception as e:
-        print(f"Error downloading file from S3: {e}")
-        exit(1)
-
-    # Convert the voice to text using Whisper
-    client = OpenAI()
-    audio_file = open(local_filename, "rb") # read from frontend, wav file?
-    transcript = client.audio.transcriptions.create(
-        model="whisper-1", 
-        file=audio_file, 
-        response_format="text"
-    )
-
-    # Send the transcript to OpenAI's GPT-4 model to get the answer
+        # Prepare the file as a tuple (filename, content)
+        audio_data = (audio.filename, content)
+        # 使用 Whisper 将语音转换为文本
+        client = OpenAI()
+        transcript = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_data,
+            response_format="text"
+        )
+    elif text:
+        # 如果没有音频文件,使用提供的文本
+        transcript = text
+    else:
+        raise HTTPException(status_code=400, detail="需要提供音频文件或文本")
+    print(f'transcript is {transcript}')
+    # 发送转录文本到 GPT-4 模型获取回答
     completion = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4-1106-preview",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": transcript}
         ]
     )
-
     response = completion.choices[0].message.content
     print(f'response is {response}')
-
-    # Return the QueryResponse with the response as a string
+    # 返回 QueryResponse
     return QueryResponse(output_wav_url=None, return_text=response)
