@@ -161,7 +161,8 @@ def process_folder(folder_path, query):
 
 # %%
 if __name__ == '__main__':
-    query = "is google a good company to invest?"
+    # query = "is google a good company to invest?"
+    query = "who is albert einstein?"
     folder_path = "."  # Replace with the path to your folder containing PDFs
     process_folder(folder_path, query)
 # %%

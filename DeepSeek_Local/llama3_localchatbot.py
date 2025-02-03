@@ -3,8 +3,8 @@ import subprocess
 
 # Function to interact with the Ollama model with streaming
 def query_ollama_model_streaming(prompt):
-    # Command to run the Ollama model
-    command = ["ollama", "run", "deepseek-r1:latest", prompt]
+    # Command to run the Ollama model using llama-3
+    command = ["ollama", "run", "llama3:latest", prompt]
     
     # Start the subprocess
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -15,7 +15,7 @@ def query_ollama_model_streaming(prompt):
 
 # Streamlit app
 def main():
-    st.title("Local Chatbot with Ollama Model")
+    st.title("Local Chatbot with Llama 3")
     
     # Initialize session state to store chat history
     if "chat_history" not in st.session_state:
@@ -24,7 +24,7 @@ def main():
     # Button to start a new thread (clear chat history)
     if st.button("Start New Thread"):
         st.session_state.chat_history = []
-        st.rerun()  # Refresh the app to clear the screen
+        st.experimental_rerun()  # Refresh the app to clear the screen
 
     # Display chat history
     for message in st.session_state.chat_history:
