@@ -1,16 +1,10 @@
-# %%
-from langchain.document_loaders import UnstructuredPDFLoader
+from langchain_community.document_loaders import UnstructuredPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import SentenceTransformerEmbeddings
+from langchain_community.chat_models import ChatOpenAI
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 import os
-# %%
-# Set OpenAI API key directly
-os.environ["OPENAI_API_KEY"] = "sk-proj-your-api-key"
-
-# %%
 
 # Load PDF documents
 def load_documents(file_path):
@@ -26,23 +20,20 @@ def chunk_documents(data):
 file_name = 'tesla10K.pdf'
 data = load_documents(file_name)
 
-# %%
 # Chunk documents
 texts = chunk_documents(data)
 print(f'Now you have {len(texts)} documents')
 
-# %%
-## Set up embeddings and vector store
-# embeddings = OpenAIEmbeddings()
-# vectorstore = Chroma.from_documents(texts, embedding_function="gpt-turbo-3.5")
-# %%
-
 def chromadb_retrieval_qa(texts, question):
-# Define the embedding function using SentenceTransformer
+    # Define the embedding function using SentenceTransformer
     embedding_function = SentenceTransformerEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
 
     # Use the embedding function with Chroma
-    vectorstore = Chroma.from_documents(texts, embedding_function)
+    vectorstore = Chroma.from_documents(
+        texts, 
+        embedding_function, 
+        persist_directory="./financial_analysis_db"
+    )
 
     llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
     qa_chain = RetrievalQA.from_chain_type(
@@ -50,13 +41,23 @@ def chromadb_retrieval_qa(texts, question):
     )
     result = qa_chain({"query": question})
     return result
-# %%
+
 if __name__ == '__main__':
-    # question = "summarize the text?"
-    question = "waht is tesla 2023 revenue"
-    # result = qa_chain({"query": question})
+    import sys
+    if len(sys.argv) != 3:
+        print("Usage: python rag.py <API_KEY> <FILENAME>")
+        sys.exit(1)
+    api_key = sys.argv[1]
+    file_name = sys.argv[2]
+    os.environ["OPENAI_API_KEY"] = api_key
+
+    # Load PDF file
+    data = load_documents(file_name)
+
+    # Chunk documents
+    texts = chunk_documents(data)
+    print(f'Now you have {len(texts)} documents')
+
+    question = "what is tesla 2023 revenue"
     result = chromadb_retrieval_qa(texts, question)
     print(result["result"])
-
-
-# %%
