@@ -4,22 +4,10 @@ import os
 from pydantic import BaseModel
 
 from agents import Agent, Runner, function_tool
-from langchain.document_loaders import UnstructuredPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from rag import chromadb_retrieval_qa
+from rag import chromadb_retrieval_qa, load_documents, chunk_documents
 
 # Set OpenAI API key directly 
-os.environ["OPENAI_API_KEY"] = "sk-proj-your openai api key"
-
-
-def load_documents(file_path):
-    loader = UnstructuredPDFLoader(file_path)
-    return loader.load()
-
-
-def chunk_documents(data):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-    return text_splitter.split_documents(data)
+os.environ["OPENAI_API_KEY"] = "sk-proj-youropenaiapikey"
 
 
 @function_tool
