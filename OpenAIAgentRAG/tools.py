@@ -1,66 +1,63 @@
-import asyncio
+from langchain_community.document_loaders import UnstructuredPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain.chains import RetrievalQA
+from langchain_community.chat_models import ChatOpenAI
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 import os
 
-from pydantic import BaseModel
-
-from agents import Agent, Runner, function_tool
-from langchain.document_loaders import UnstructuredPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-
-# Set OpenAI API key directly
-os.environ["OPENAI_API_KEY"] = "sk-proj-your-api-key"
-
-class Weather(BaseModel):
-    city: str
-    temperature_range: str
-    conditions: str
-
-
-@function_tool
-def get_weather(city: str) -> Weather:
-    print("[debug] get_weather called")
-    return Weather(city=city, temperature_range="14-20C", conditions="Sunny with wind.")
-
-
+# Load PDF documents
 def load_documents(file_path):
     loader = UnstructuredPDFLoader(file_path)
     return loader.load()
 
-
+# Split documents into chunks
 def chunk_documents(data):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
     return text_splitter.split_documents(data)
 
+# Load PDF file
+file_name = 'tesla10K.pdf'
+data = load_documents(file_name)
 
-@function_tool
-def get_rag_answer(question: str) -> str:
-    print("[debug] get_rag_answer called")
-    # Load and chunk the documents
-    data = load_documents('tesla10K.pdf')
+# Chunk documents
+texts = chunk_documents(data)
+print(f'Now you have {len(texts)} documents')
+
+def chromadb_retrieval_qa(texts, question):
+    # Define the embedding function using SentenceTransformer
+    embedding_function = SentenceTransformerEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
+
+    # Use the embedding function with Chroma
+    vectorstore = Chroma.from_documents(
+        texts, 
+        embedding_function, 
+        persist_directory="./financial_analysis_db"
+    )
+
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    qa_chain = RetrievalQA.from_chain_type(
+        llm, retriever=vectorstore.as_retriever()
+    )
+    result = qa_chain({"query": question})
+    return result
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) != 3:
+        print("Usage: python rag.py <API_KEY> <FILENAME>")
+        sys.exit(1)
+    api_key = sys.argv[1]
+    file_name = sys.argv[2]
+    os.environ["OPENAI_API_KEY"] = api_key
+
+    # Load PDF file
+    data = load_documents(file_name)
+
+    # Chunk documents
     texts = chunk_documents(data)
-    # Perform retrieval-augmented generation
+    print(f'Now you have {len(texts)} documents')
+
+    question = "what is tesla 2023 revenue"
     result = chromadb_retrieval_qa(texts, question)
-    return result['result']
-
-
-agent = Agent(
-    name="Hello world", 
-    instructions="You are a helpful agent.",
-    tools=[get_weather, get_rag_answer],
-)
-
-
-async def main():
-    # Ensure OpenAI API key is set
-    if not os.getenv("OPENAI_API_KEY"):
-        raise ValueError("OPENAI_API_KEY environment variable must be set")
-        
-    result = await Runner.run(agent, input="What's the weather in Tokyo?")
-    result = await Runner.run(agent, input="What's tesla revenue in 2024?")
-    result = await Runner.run(agent, input="who is ceo of tesla?")
-    print(result.final_output)
-    # The weather in Tokyo is sunny.
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    print(result["result"])
