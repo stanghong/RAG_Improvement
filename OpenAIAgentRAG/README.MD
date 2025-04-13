@@ -20,7 +20,7 @@ This example demonstrates how to create and use an agent with custom tools for w
 
 1. Run the script:
    ```bash
-   python tools.py
+   python Financial_Analysis_Agent.py
    ```
 
 2. The script will:
