@@ -2,6 +2,18 @@
 
 This example demonstrates how to create and use an agent with custom tools for financial analysis using Retrieval-Augmented Generation (RAG) and other analytical capabilities.
 
+why do we use agent +tools instead of prompt engineering
+|----------------------------|----------------------------------------|
+| Prompt Engineering         | Agent + Tools                          |
+|----------------------------|----------------------------------------|
+| LLM-only logic             | Combines LLM + custom code             |
+| Limited to model knowledge | Access to real-time data, files, APIs  |
+| No structured memory or logic | You can build workflows and logic chains |
+| Manual prompt chaining     | Auto-decision based on inputs          |
+| Not scalable               | Super modular and extendable           |
+|----------------------------|----------------------------------------|
+
+
 ## Setup
 
 1. Set your OpenAI API key as an environment variable or directly in the code:
