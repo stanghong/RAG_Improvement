@@ -1,19 +1,23 @@
 import asyncio
 import os
+from dotenv import load_dotenv
 
 from pydantic import BaseModel
 
 from agents import Agent, Runner, function_tool
 from rag import chromadb_retrieval_qa, load_documents, chunk_documents
 
-# Set OpenAI API key directly 
-os.environ["OPENAI_API_KEY"] = "sk-proj-youropenaiapikey"
+# Load environment variables from .env file
+load_dotenv()
+OPENAI_API_KEY = os.getenv("openai_api_key")
+os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
+file_name = 'tesla10K.pdf'
 
 @function_tool
 def get_rag_answer(question: str) -> str:
     print("[debug] get_rag_answer called")
-    data = load_documents('tesla10K.pdf')
+    data = load_documents(file_name)
     texts = chunk_documents(data)
     result = chromadb_retrieval_qa(texts, question)
     return result['result']
@@ -22,7 +26,7 @@ def get_rag_answer(question: str) -> str:
 @function_tool
 def summarize_document() -> str:
     print("[debug] summarize_document called")
-    data = load_documents('tesla10K.pdf')
+    data = load_documents(file_name)
     texts = chunk_documents(data)
     # Simulate summarization
     return "Summary of the document: Key financial metrics and projections."
@@ -43,7 +47,7 @@ agent = Agent(
 
 
 async def main():
-    if not os.getenv("OPENAI_API_KEY"):
+    if not OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY environment variable must be set")
     
     # Demonstrate the use of the RAG tool to answer a specific question
@@ -57,6 +61,9 @@ async def main():
     # Demonstrate the use of the compare_with_historical tool
     result = await Runner.run(agent, input="Compare with historical data. add few more details")
     print("Compare with Historical Data Tool Output:", result.final_output)
+
+    # Call rag.py with API key and filename
+    os.system(f"python rag.py {OPENAI_API_KEY} {file_name}")
 
 
 if __name__ == "__main__":
