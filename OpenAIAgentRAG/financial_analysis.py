@@ -6,21 +6,10 @@ from pydantic import BaseModel
 from agents import Agent, Runner, function_tool
 from langchain.document_loaders import UnstructuredPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from rag import chromadb_retrieval_qa, load_documents, chunk_documents
+from rag import chromadb_retrieval_qa
 
-# Set OpenAI API key directly
-os.environ["OPENAI_API_KEY"] = "sk-proj-your-openaiapikey"
-
-class Weather(BaseModel):
-    city: str
-    temperature_range: str
-    conditions: str
-
-
-@function_tool
-def get_weather(city: str) -> Weather:
-    print("[debug] get_weather called")
-    return Weather(city=city, temperature_range="14-20C", conditions="Sunny with wind.")
+# Set OpenAI API key directly 
+os.environ["OPENAI_API_KEY"] = "sk-proj-your openai api key"
 
 
 def load_documents(file_path):
@@ -61,7 +50,7 @@ def compare_with_historical() -> str:
 agent = Agent(
     name="Comprehensive Financial Analysis Agent",
     instructions="You are a financial analysis agent. Use the RAG tool and other tools to provide a comprehensive analysis.",
-    tools=[get_weather, get_rag_answer, summarize_document, compare_with_historical],
+    tools=[get_rag_answer, summarize_document, compare_with_historical],
 )
 
 
