@@ -1,5 +1,7 @@
 # Financial Analysis Agent with RAG and Analysis Tools
 
+Medium blog: https://medium.com/@Stan_DS/create-a-financial-analysis-agent-using-multiple-tools-including-rag-a3c5ac0d7568
+
 This example demonstrates how to create and use an agent with custom tools for financial analysis using Retrieval-Augmented Generation (RAG) and other analytical capabilities.
 
 
